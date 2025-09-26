@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Doctor Dashboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+    }
+    header {
+      background: #2980b9;
+      color: white;
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 8px;
+    }
+    main {
+      background: white;
+      margin-top: 25px;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    input {
+      padding: 10px;
+      width: 200px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      padding: 10px 16px;
+      border: none;
+      background: #2980b9;
+      color: white;
+      border-radius: 6px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+    button:hover { background: #1f6692; }
+    #result img { width: 120px; border-radius: 50%; margin: 10px 0; }
+    .logout { background: #c0392b; }
+    .logout:hover { background: #962d22; }
+    .card {
+      background: #f9fbfc;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h2>👨‍⚕️ <span id="docName"></span></h2>
+      <p id="docSpec"></p>
+    </div>
+    <button class="logout" onclick="logout()">Logout</button>
+  </header>
+
+  <main>
+    <h3>Search Patient</h3>
+    <input type="text" id="code" placeholder="Enter 4-digit code">
+    <button onclick="searchPatient()">Search</button>
+    <hr>
+    <div id="result"></div>
+  </main>
+
+  <script>
+  // ✅ Load doctor info
+  const doc = JSON.parse(localStorage.getItem("doctor"));
+  if (!doc) window.location.href = "log.html";
+  document.getElementById("docName").textContent = doc.name;
+  document.getElementById("docSpec").textContent = doc.specialization;
+
+  async function searchPatient() {
+    const codeInput = document.getElementById("code");
+    const code = codeInput.value.trim();
+    if (!code) return alert("Enter patient code");
+
+    try {
+      const res = await fetch(`http://localhost:3000/doctor/patient/${code}?doctorId=${doc.id}`);
+      const data = await res.json();
+      const div = document.getElementById("result");
+      div.innerHTML = "";
+
+      if (!res.ok) {
+        div.innerHTML = `<p style="color:red;">${data.error || "Patient not found"}</p>`;
+        return;
+      }
+
+      const p = data.patientInfo;
+      const publicData = data.publicData || {};
+
+      // 🧍 Patient Info
+      div.innerHTML = `
+        <div style="display:flex;align-items:center;gap:15px;">
+          <img src="${p.profilePhoto || ''}" alt="${p.name}" width="100" style="border-radius:10px;">
+          <div>
+            <h3>${p.name} (${p.age || '-'} yrs)</h3>
+            <p><b>Blood Group:</b> ${p.bloodGroup || '-'}</p>
+            <p><b>Allergies:</b> ${p.allergies || 'None'}</p>
+            <p><b>Emergency Contact:</b> ${p.emergencyContact || '-'}</p>
+          </div>
+        </div>
+        <hr>
+        <h3>📄 Public Prescription Info</h3>
+      `;
+
+      // 💊 Public Data
+      if (Object.keys(publicData).length > 0) {
+        for (const [key, value] of Object.entries(publicData)) {
+          div.innerHTML += `<p><b>${key}:</b> ${value}</p>`;
+        }
+      } else {
+        div.innerHTML += `<p style="color:gray;">No public data found.</p>`;
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+      alert("Failed to fetch patient data. Please check server connection.");
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem("doctor");
+    window.location.href = "log.html";
+  }
+</script>
+
+</body>
+</html>

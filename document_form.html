@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Medical Prescription OCR Form</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .form-section { margin-bottom: 15px; }
+    label { display: block; font-weight: bold; margin-bottom: 5px; }
+    input, textarea { width: 100%; padding: 8px; margin-bottom: 10px; }
+    button { padding: 10px 20px; margin-right: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Upload Prescription</h1>
+  
+  <input type="file" id="docInput" accept="image/*,application/pdf"><br><br>
+  <button onclick="processDocument()">Extract & Fill Form</button>
+
+  <h2>Auto-Filled Prescription Form</h2>
+  <form id="prescriptionForm">
+    <div class="form-section"><label>Hospital Name</label><input type="text" id="hospital" value="None"></div>
+    <div class="form-section"><label>Report No</label><input type="text" id="reportNo" value="None"></div>
+    <div class="form-section"><label>Date</label><input type="text" id="date" value="None"></div>
+    <div class="form-section"><label>Vitals (BP / Pulse / Temp)</label><input type="text" id="vitals" value="None"></div>
+    <div class="form-section"><label>Blood Sugar (Fasting)</label><input type="text" id="sugar" value="None"></div>
+    <div class="form-section"><label>Cholesterol</label><input type="text" id="cholesterol" value="None"></div>
+    <div class="form-section"><label>Diagnosis / History</label><textarea id="diagnosis">None</textarea></div>
+    <div class="form-section"><label>Medication</label><textarea id="medication">None</textarea></div>
+    <div class="form-section"><label>Doctor’s Notes</label><textarea id="notes">None</textarea></div>
+    <div class="form-section"><label>Doctor</label><input type="text" id="doctor" value="None"></div>
+    <button type="button" onclick="saveForm()">Save</button>
+    <button type="reset">Clear</button>
+  </form>
+
+  <script>
+    async function processDocument() {
+      const file = document.getElementById('docInput').files[0];
+      if (!file) { alert("Upload a file first"); return; }
+
+      const { data: { text } } = await Tesseract.recognize(file, 'eng');
+      console.log("OCR Result:", text);
+
+      const getVal = (regex, flags="i") => {
+        const match = text.match(new RegExp(regex, flags));
+        return match ? match[1].trim() : "None";
+      };
+
+      document.getElementById("hospital").value =
+        getVal("(CityCare.*Hospital)");
+
+      document.getElementById("reportNo").value =
+        getVal("Report\\s*No[:\\-]?\\s*([A-Za-z0-9\\-]+)");
+
+      document.getElementById("date").value =
+        getVal("Date[:\\-]?\\s*([0-9\\/\\-]+)");
+
+      // Capture BP, Pulse, Temp together
+      const bp = getVal("Blood Pressure\\s*([0-9\\/]+\\s*mmHg)");
+      const pulse = getVal("Pulse Rate\\s*([0-9]+\\s*bpm)");
+      const temp = getVal("Temperature\\s*([0-9.]+.?F)");
+      document.getElementById("vitals").value =
+        (bp !== "None" ? "BP: " + bp : "") + 
+        (pulse !== "None" ? ", Pulse: " + pulse : "") + 
+        (temp !== "None" ? ", Temp: " + temp : "");
+
+      document.getElementById("sugar").value =
+        getVal("Blood Sugar.*?([0-9]+.*mg\\/dL)");
+
+      document.getElementById("cholesterol").value =
+        getVal("Cholesterol[:\\-]?\\s*([A-Za-z]+)");
+
+      const diagnosisMatch = text.match(/Diagnosis\s*\/\s*History([\s\S]*?)Prescribed/i);
+      document.getElementById("diagnosis").value =
+        diagnosisMatch ? diagnosisMatch[1].trim() : "None";
+
+      const medicationMatch = text.match(/Prescribed Medication([\s\S]*?)Doctor/i);
+      document.getElementById("medication").value =
+        medicationMatch ? medicationMatch[1].trim() : "None";
+
+      const notesMatch = text.match(/Doctor.?s Notes([\s\S]*?)Doctor:/i);
+      document.getElementById("notes").value =
+        notesMatch ? notesMatch[1].trim() : "None";
+
+      document.getElementById("doctor").value =
+        getVal("Doctor[:\\-]?\\s*(Dr\\.?\\s*[A-Za-z ]+)");
+    }
+
+   async function saveForm() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) { alert("Login first"); return; }
+
+  const file = document.getElementById('docInput').files[0];
+  if (!file) { alert("Upload a file first"); return; }
+
+  const formData = new FormData();
+  formData.append("photo", file);
+  formData.append("date", document.getElementById("date").value);
+  formData.append("hospital", document.getElementById("hospital").value);
+  formData.append("reportNo", document.getElementById("reportNo").value);
+  formData.append("vitals", document.getElementById("vitals").value);
+  formData.append("sugar", document.getElementById("sugar").value);
+  formData.append("cholesterol", document.getElementById("cholesterol").value);
+  formData.append("diagnosis", document.getElementById("diagnosis").value);
+  formData.append("medication", document.getElementById("medication").value);
+  formData.append("notes", document.getElementById("notes").value);
+  formData.append("doctor", document.getElementById("doctor").value);
+
+  const res = await fetch(`/prescription/${user.code}`, {
+    method: "POST",
+    body: formData
+  });
+
+  if (res.ok) {
+    alert("Prescription saved successfully!");
+    loadPrescriptions(); // refresh preview
+  } else {
+    alert("Failed to save prescription.");
+  }
+}
+
+// Load & preview all prescriptions
+async function loadPrescriptions() {
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return;
+
+  const res = await fetch(`/prescription/${user.code}`);
+const data = await res.json();
+
+
+  const container = document.getElementById("history");
+  container.innerHTML = "";
+  data.forEach(p => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <p><b>Date:</b> ${p.date}</p>
+      <img src="${p.photo}" alt="Prescription" width="200"><br>
+      <small>${p.hospital || ""} - ${p.doctor || ""}</small>
+      <hr>
+    `;
+    container.appendChild(div);
+  });
+}
+  </script>
+
+
+<h2>Past Prescriptions</h2>
+<div id="history"></div>
+
+<script>
+  window.onload = loadPrescriptions;
+</script>
+
+
+</body>
+</html>

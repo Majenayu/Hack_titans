@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PALS - Dashboard</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 250px;
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .sidebar img {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      margin: 0 auto 10px;
+      display: block;
+    }
+    .sidebar p {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    .main {
+      flex: 1;
+      background: #ecf0f1;
+      padding: 20px;
+      position: relative;
+    }
+    .user-code {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-weight: bold;
+      background: #2980b9;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+    h1 {
+      margin-top: 60px;
+      color: #2c3e50;
+    }
+    .buttons {
+      margin-top: 30px;
+      display: flex;
+      gap: 20px;
+    }
+    .buttons button {
+      padding: 15px 25px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      color: white;
+    }
+    .prescription-btn {
+      background: #27ae60;
+    }
+    .history-btn {
+      background: #8e44ad;
+    }
+    .buttons button:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>User Details</h2>
+    <img id="profilePhoto" src="" alt="Profile Photo">
+    <p><b>Name:</b> <span id="name"></span></p>
+    <p><b>Age:</b> <span id="age"></span></p>
+    <p><b>Blood Group:</b> <span id="bloodGroup"></span></p>
+    <p><b>Allergies:</b> <span id="allergies"></span></p>
+    <p><b>Emergency Contact:</b> <span id="emergencyContact"></span></p>
+    <p><b>Email:</b> <span id="email"></span></p>
+  </div>
+
+  <div class="main">
+    <div class="user-code">Code: <span id="code"></span></div>
+    <h1>Welcome to Dashboard</h1>
+    <div class="buttons">
+      <button class="prescription-btn">Add Prescription</button>
+      <button class="history-btn">History</button>
+
+      <button class="manage-btn">Manage Prescription Visibility</button>
+
+    </div>
+  </div>
+
+<script>
+ const user = JSON.parse(localStorage.getItem("user"));
+ if (!user) {
+   window.location.href = "index.html";
+ } else {
+   document.getElementById("name").innerText = user.name;
+   document.getElementById("age").innerText = user.age;
+   document.getElementById("bloodGroup").innerText = user.bloodGroup;
+   document.getElementById("allergies").innerText = user.allergies || "None";
+   document.getElementById("emergencyContact").innerText = user.emergencyContact;
+   document.getElementById("email").innerText = user.email;
+   document.getElementById("code").innerText = user.code;
+
+   document.getElementById("profilePhoto").src = user.profilePhoto && user.profilePhoto.trim() !== ""
+     ? user.profilePhoto
+     : "default.png";
+ }
+
+
+ document.querySelector(".prescription-btn").addEventListener("click", () => {
+  window.location.href = "document_form.html";
+});
+
+
+document.querySelector(".manage-btn").addEventListener("click", () => {
+  window.location.href = "manage.html";
+});
+
+
+document.querySelector(".history-btn").addEventListener("click", () => {
+  window.location.href = "history.html";
+});
+
+
+
+</script>
+
+</body>
+</html>

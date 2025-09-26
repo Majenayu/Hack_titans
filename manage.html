@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Prescription Visibility</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .field-row { display: flex; justify-content: space-between; margin-bottom: 12px; }
+    label { font-weight: bold; }
+    select { padding: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Manage Prescription Visibility</h1>
+  <form id="visibilityForm">
+    <div class="field-row">
+      <label>Hospital Name</label>
+      <select name="hospital">
+        <option value="public">Public</option>
+        <option value="private">Private</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <label>Report No</label>
+      <select name="reportNo">
+        <option value="public">Public</option>
+        <option value="private">Private</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <label>Date</label>
+      <select name="date">
+        <option value="public">Public</option>
+        <option value="private">Private</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <label>Vitals</label>
+      <select name="vitals">
+        <option value="public">Public</option>
+        <option value="private">Private</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <label>Sugar</label>
+      <select name="sugar">
+        <option value="public">Public</option>
+        <option value="private">Private</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <label>Cholesterol</label>
+      <select name="cholesterol">
+        <option value="public">Public</option>
+        <option value="private">Private</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <label>Diagnosis</label>
+      <select name="diagnosis">
+        <option value="public">Public</option>
+        <option value="private">Private</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <label>Medication</label>
+      <select name="medication">
+        <option value="public">Public</option>
+        <option value="private">Private</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <label>Doctor’s Notes</label>
+      <select name="notes">
+        <option value="public">Public</option>
+        <option value="private">Private</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <label>Doctor</label>
+      <select name="doctor">
+        <option value="public">Public</option>
+        <option value="private">Private</option>
+      </select>
+    </div>
+  </form>
+
+ <script>
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) { window.location.href = "index.html"; }
+
+    async function loadManageData() {
+      const res = await fetch(`/manage/${user.code}`);
+      if (!res.ok) { alert("Failed to load data"); return; }
+
+      const { prescription, visibility } = await res.json();
+      const container = document.getElementById("visibilityForm");
+      container.innerHTML = "";
+
+      const fields = ["hospital", "reportNo", "date", "vitals", "sugar", "cholesterol", "diagnosis", "medication", "notes", "doctor"];
+
+      fields.forEach(f => {
+        const value = prescription ? (prescription[f] || "Not available") : "No prescription yet";
+        const currentVis = visibility[f] || "public";
+
+        const row = document.createElement("div");
+        row.className = "field-row";
+        row.innerHTML = `
+          <div class="field-label">${f.charAt(0).toUpperCase() + f.slice(1)}</div>
+          <div class="field-answer">${value}</div>
+          <select name="${f}">
+            <option value="public" ${currentVis === "public" ? "selected" : ""}>Public</option>
+            <option value="private" ${currentVis === "private" ? "selected" : ""}>Private</option>
+          </select>
+        `;
+        container.appendChild(row);
+      });
+
+      // Add listener for updates
+      container.querySelectorAll("select").forEach(sel => {
+        sel.addEventListener("change", e => {
+          updateVisibility(e.target.name, e.target.value);
+        });
+      });
+    }
+
+    async function updateVisibility(field, value) {
+      await fetch(`/visibility/${user.code}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ field, value })
+      });
+    }
+
+    window.onload = loadManageData;
+  </script>
+</body>
+</html>
+</body>
+</html>

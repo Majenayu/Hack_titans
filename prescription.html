@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PALS - Prescriptions</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+    h1 { color: #2c3e50; }
+    .form { background: white; padding: 20px; border-radius: 10px; margin-bottom: 30px; }
+    input, button { margin: 10px 0; padding: 10px; border-radius: 6px; border: 1px solid #ccc; width: 100%; }
+    button { background: #2980b9; color: white; cursor: pointer; }
+    button:hover { background: #1f6391; }
+    .timeline { margin-top: 30px; }
+    .date-group { margin-bottom: 20px; }
+    .date-group h3 { background: #2980b9; color: white; padding: 8px; border-radius: 6px; }
+    .prescription-img { width: 200px; margin: 10px; border-radius: 8px; }
+    video, canvas { max-width: 100%; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>Add Prescription</h1>
+  <div class="form">
+    <label>Select Date:</label>
+    <input type="date" id="date" required>
+
+    <label>Upload from System:</label>
+    <input type="file" id="photo" accept="image/*">
+
+    <p>Or capture from Camera:</p>
+    <video id="camera" autoplay playsinline></video><br>
+    <button id="captureBtn">Capture</button>
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <button id="saveBtn">Save Prescription</button>
+  </div>
+
+  <h2>Your Prescriptions</h2>
+  <div class="timeline" id="timeline"></div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) window.location.href = "index.html";
+
+    // Camera setup
+    const video = document.getElementById("camera");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    let cameraImageBlob = null;
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => { video.srcObject = stream; })
+      .catch(err => console.error("Camera error:", err));
+
+    document.getElementById("captureBtn").addEventListener("click", () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+      canvas.toBlob(blob => { cameraImageBlob = blob; });
+      alert("📸 Image captured from camera!");
+    });
+
+    // Save prescription
+    document.getElementById("saveBtn").addEventListener("click", async () => {
+      const date = document.getElementById("date").value;
+      if (!date) return alert("Please select a date");
+
+      const formData = new FormData();
+      formData.append("date", date);
+
+      const fileInput = document.getElementById("photo").files[0];
+      if (fileInput) {
+        formData.append("photo", fileInput);
+      } else if (cameraImageBlob) {
+        formData.append("photo", new File([cameraImageBlob], "camera.jpg", { type: "image/jpeg" }));
+      } else {
+        return alert("Please select or capture an image");
+      }
+
+      const res = await fetch(`http://localhost:3000/prescription/${user.code}`, {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      if (data.message) {
+        alert(data.message);
+        loadPrescriptions();
+      } else {
+        alert("Error saving prescription");
+      }
+    });
+
+   // Load prescriptions
+async function loadPrescriptions() {
+  const res = await fetch(`http://localhost:3000/prescription/${user.code}`);
+  const prescriptions = await res.json();
+
+  if (!Array.isArray(prescriptions)) {
+    console.error("Error loading prescriptions:", prescriptions);
+    return;
+  }
+
+  const timeline = document.getElementById("timeline");
+  timeline.innerHTML = "";
+
+  const grouped = {};
+  prescriptions.forEach(p => {
+    if (!grouped[p.date]) grouped[p.date] = [];
+    grouped[p.date].push(p);
+  });
+
+  for (const date in grouped) {
+    const groupDiv = document.createElement("div");
+    groupDiv.className = "date-group";
+    groupDiv.innerHTML = `<h3>${date}</h3>`;
+    grouped[date].forEach(p => {
+      const img = document.createElement("img");
+      img.src = p.photo;
+      img.className = "prescription-img";
+      groupDiv.appendChild(img);
+    });
+    timeline.appendChild(groupDiv);
+  }
+}
+
+    loadPrescriptions();
+  </script>
+</body>
+</html>
