@@ -100,24 +100,28 @@
       e.preventDefault();
       const email = e.target.email.value;
       const password = e.target.password.value;
+      const msg = document.getElementById("msg");
+      msg.innerText = "⏳ Logging in...";
 
       try {
-        fetch("https://hack-titans.onrender.com/login", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ email, password })
-});
+        const res = await fetch("https://hack-titans.onrender.com/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
 
         const data = await res.json();
 
-        if (data.message && data.code) {
-          localStorage.setItem("user", JSON.stringify(data)); // store patient data
+        if (res.ok && data.message && data.code) {
+          localStorage.setItem("user", JSON.stringify(data));
+          msg.innerText = "✅ Login successful!";
           window.location.href = "dashboard.html";
         } else {
-          document.getElementById("msg").innerText = data.error || "Login failed";
+          msg.innerText = data.error || "⚠️ Login failed. Try again.";
         }
       } catch (err) {
-        document.getElementById("msg").innerText = "Error logging in.";
+        console.error(err);
+        msg.innerText = "❌ Server error. Please try again later.";
       }
     });
   </script>
