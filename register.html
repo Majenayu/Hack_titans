@@ -94,21 +94,23 @@
   </div>
 
   <script>
-    document.getElementById("registerForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
+  document.getElementById("registerForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
 
-      try {
-        const res = await fetch("http://localhost:3000/register", {
-          method: "POST",
-          body: formData
-        });
-        const data = await res.json();
-        document.getElementById("msg").innerText = data.message + (data.code ? " | Code: " + data.code : "");
-      } catch (err) {
-        document.getElementById("msg").innerText = "Error registering user.";
-      }
-    });
-  </script>
+    try {
+      const res = await fetch("/register", {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      document.getElementById("msg").innerText =
+        data.message + (data.code ? " | Code: " + data.code : "");
+    } catch (err) {
+      document.getElementById("msg").innerText = "Error registering user.";
+    }
+  });
+</script>
+
 </body>
 </html>
