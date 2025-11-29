@@ -120,7 +120,21 @@ Available from:
 - Run `npm start` to start the server
 - Access at the provided Replit URL
 - Emergency feature works without API key (basic mode)
-- Prescription extraction requires OpenAI API key for full AI capabilities
+- Prescription extraction requires OpenRouter API key for full AI capabilities
+
+## Deployment (Render/Production)
+**Environment Variables Required:**
+1. `MONGO_URI` - MongoDB Atlas connection string
+2. `CLOUDINARY_CLOUD_NAME` - Your Cloudinary cloud name
+3. `CLOUDINARY_API_KEY` - Your Cloudinary API key
+4. `CLOUDINARY_API_SECRET` - Your Cloudinary API secret
+5. `OPENROUTER_API_KEY_HARDCODE` - Your OpenRouter API key (for AI features)
+6. `NODE_ENV` - Set to "production"
+
+**Server Configuration:**
+- App listens on `0.0.0.0` (required for Render/cloud hosting)
+- Port: Automatically uses `process.env.PORT` (Render assigns port dynamically)
+- All environment variables must be added in Render's dashboard under Settings > Environment
 
 ## User Preferences
 None specified yet.
