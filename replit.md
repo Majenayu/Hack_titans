@@ -1,9 +1,9 @@
 # PALS - Patient Access and Logging System
 
 ## Overview
-PALS is a medical kit application that allows patients to manage their medical records and prescriptions, while enabling doctors to access patient information based on privacy settings.
+PALS is a comprehensive medical kit application that allows patients to manage their medical records and prescriptions with detailed health information, while enabling doctors to access patient information based on privacy settings.
 
-**Current State**: Successfully imported and configured for Replit environment.
+**Current State**: Fully configured and running in Replit environment with structured prescription format and enhanced UI.
 
 ## Project Architecture
 
@@ -15,42 +15,73 @@ PALS is a medical kit application that allows patients to manage their medical r
 - **Host**: 0.0.0.0 in development, localhost in production
 
 ### Frontend
-- **Type**: Static HTML/CSS/JavaScript
+- **Type**: Static HTML/CSS/JavaScript with modern responsive design
 - **Pages**:
   - `index.html` - Patient login
   - `register.html` - Patient registration
-  - `dashboard.html` - Patient dashboard
-  - `prescription.html` - Prescription management
-  - `document_form.html` - Document forms
+  - `dashboard.html` - Patient dashboard with stats and quick actions
+  - `document_form.html` - Structured prescription form with disease checkboxes
+  - `prescription.html` - View all prescriptions with detailed cards
+  - `manage.html` - Privacy settings with columnar table layout
   - `history.html` - Doctor visit history
-  - `manage.html` - Privacy settings management
   - `log.html` - Doctor login
   - `reg.html` - Doctor registration
-  - `dash.html` - Doctor dashboard
+  - `dash.html` - Doctor dashboard with patient search
 
 ### Key Features
-1. **Patient Management**: Registration, login, profile management
-2. **Prescription System**: Upload prescriptions via file or camera
-3. **Privacy Controls**: Patients control what doctors can see
-4. **Doctor Portal**: Search patients by code, view authorized data
+1. **Patient Management**: Registration, login, profile management with photo upload
+2. **Structured Prescription System**: 
+   - Hospital information (name, report number, date)
+   - Vital signs (BP, pulse, temperature)
+   - Lab results (blood sugar, cholesterol)
+   - Disease checkboxes with stages (Cancer, Diabetes, Heart Disease, etc.)
+   - Medical history and diagnosis
+   - Prescribed medication
+   - Doctor's notes
+   - Prescription image upload
+3. **Privacy Controls**: Patients control what doctors can see with easy toggle interface
+4. **Doctor Portal**: Search patients by code, view authorized data in structured format
 5. **Visit History**: Track which doctors accessed patient records
+
+### Prescription Fields
+- **Hospital Info**: Hospital name, Report number, Date
+- **Vitals**: Blood Pressure, Pulse Rate, Temperature
+- **Lab Results**: Blood Sugar, Cholesterol
+- **Medical Details**: Medical History, Diseases & Conditions (with stages), Medication
+- **Doctor Info**: Doctor name, Doctor's notes
+- **Attachment**: Prescription image
+
+### Diseases with Stages
+The system supports the following diseases with stage selection:
+- Diabetes (Type 1, Type 2, Prediabetes)
+- Hypertension (Stage 1, Stage 2, Crisis)
+- Cancer (Stage 1-4)
+- Heart Disease (Mild, Moderate, Severe)
+- Kidney Disease (Stage 1-5)
+- Liver Disease (Mild, Moderate, Severe, Cirrhosis)
+- Asthma (Intermittent, Mild Persistent, Moderate, Severe)
+- COPD (Mild, Moderate, Severe, Very Severe)
+- Arthritis (Early, Moderate, Severe)
+- Thyroid Disorder (Hypothyroidism, Hyperthyroidism, Goiter)
+- Alzheimer's (Early, Middle, Late)
+- Parkinson's (Stage 1-5)
 
 ### Database Collections
 - `users` - Patient information
 - `doctors` - Doctor accounts
-- `patientData` - Prescriptions and medical records
-- `visibilityData` - Privacy settings per patient
+- `patientData` - Prescriptions and medical records with structured fields
+- `visibilityData` - Privacy settings per patient per field
 - `visitHistory` - Doctor access logs
 
 ## Recent Changes (November 29, 2025)
-- Configured for Replit environment
-- Updated all API endpoints to use relative URLs
-- Moved hardcoded credentials to environment variables with fallbacks
-- Changed server port from 3000 to 5000 for Replit compatibility
-- Configured server to bind to 0.0.0.0 in development
-- Added npm start script
-- Created .gitignore for Node.js
-- Set up workflow for automatic server start
+- Enhanced prescription form with structured sections
+- Added disease checkboxes with stage selection
+- Redesigned manage visibility page with columnar table layout
+- Updated patient dashboard with stats and quick actions
+- Improved doctor dashboard with structured patient data display
+- Added detailed prescription cards view
+- Updated backend schema for new fields (bp, pulse, temperature, diseases, history)
+- Configured for Replit environment with proper port and host settings
 
 ## Environment Variables
 The following environment variables can be configured (fallback values are in place):
@@ -73,7 +104,7 @@ The following environment variables can be configured (fallback values are in pl
 ## Development
 - Run `npm start` to start the server
 - Access the application at the provided Replit URL
-- Frontend automatically proxied through the Express server
+- Frontend automatically served through the Express server
 
 ## User Preferences
 None specified yet.
