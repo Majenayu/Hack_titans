@@ -68,6 +68,8 @@ const userSchema = new mongoose.Schema({
   age: Number,
   bloodGroup: String,
   allergies: String,
+  medicalConditions: String,
+  currentMedications: String,
   emergencyContact: String,
   email: String,
   password: String,
@@ -104,7 +106,7 @@ const Prescription = mongoose.model("Prescription", prescriptionSchema);
 // Registration
 app.post("/register", upload.single("photo"), async (req, res) => {
   try {
-    const { name, age, bloodGroup, allergies, emergencyContact, email, password } = req.body;
+    const { name, age, bloodGroup, allergies, medicalConditions, currentMedications, emergencyContact, email, password } = req.body;
 
     let photoUrl = "";
     if (req.file) {
@@ -116,7 +118,7 @@ app.post("/register", upload.single("photo"), async (req, res) => {
     const hashedPass = await bcrypt.hash(password, 10);
 
     const newUser = new User({
-      code, name, age, bloodGroup, allergies, emergencyContact,
+      code, name, age, bloodGroup, allergies, medicalConditions, currentMedications, emergencyContact,
       email, password: hashedPass, profilePhoto: photoUrl
     });
     await newUser.save();
@@ -145,6 +147,8 @@ app.post("/login", async (req, res) => {
       age: user.age,
       bloodGroup: user.bloodGroup,
       allergies: user.allergies,
+      medicalConditions: user.medicalConditions,
+      currentMedications: user.currentMedications,
       emergencyContact: user.emergencyContact,
       email: user.email,
       profilePhoto: user.profilePhoto
@@ -533,7 +537,7 @@ app.get("/emergency/patient/:code", async (req, res) => {
   try {
     const { code } = req.params;
     
-    const patient = await User.findOne({ code }).select("name age bloodGroup allergies");
+    const patient = await User.findOne({ code }).select("name age bloodGroup allergies medicalConditions currentMedications");
     if (!patient) return res.status(404).json({ error: "Patient not found" });
     
     const prescriptions = await Prescription.find({ code }).sort({ createdAt: -1 }).limit(5);
@@ -544,6 +548,17 @@ app.get("/emergency/patient/:code", async (req, res) => {
       allergies: patient.allergies || "None reported"
     };
     
+    // Add user's stored medical conditions
+    if (patient.medicalConditions) {
+      medicalHistory.diseases.push(...patient.medicalConditions.split(',').map(d => d.trim()));
+    }
+    
+    // Add user's stored current medications
+    if (patient.currentMedications) {
+      medicalHistory.medications.push(...patient.currentMedications.split(',').map(m => m.trim()));
+    }
+    
+    // Also include prescription data
     prescriptions.forEach(p => {
       if (p.diseases) medicalHistory.diseases.push(...p.diseases.split(',').map(d => d.trim()));
       if (p.medication) medicalHistory.medications.push(...p.medication.split(',').map(m => m.trim()));
