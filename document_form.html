@@ -251,6 +251,18 @@
     
     <div class="form-body">
       <form id="prescriptionForm">
+        <div class="section upload-section" style="border-left-color: #9b59b6; background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);">
+          <div class="section-title" style="color: #7c3aed;"><span>🤖</span> Quick Fill: Upload Prescription Image</div>
+          <p style="color: #666; font-size: 13px; margin-bottom: 15px;">Upload a prescription or medical report image and we'll automatically fill the form for you!</p>
+          <div class="upload-area" id="uploadArea" style="border-color: #9b59b6;">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text">Click to upload prescription image<br><small>or drag and drop here</small></div>
+            <input type="file" id="fileInput" accept="image/*">
+            <div id="fileName"></div>
+          </div>
+          <div id="extractStatus" style="display:none; margin-top:15px; padding:15px; border-radius:8px; background:#f0fdf4; border:1px solid #22c55e;"></div>
+        </div>
+
         <div class="section">
           <div class="section-title"><span>🏥</span> Hospital Information</div>
           <div class="row">
@@ -459,18 +471,6 @@
           </div>
         </div>
 
-        <div class="section upload-section">
-          <div class="section-title"><span>📎</span> Upload Prescription Image</div>
-          <div class="upload-area" id="uploadArea">
-            <div class="upload-icon">📄</div>
-            <div class="upload-text">Click to upload prescription image<br><small>or drag and drop here</small></div>
-            <input type="file" id="fileInput" accept="image/*">
-            <div id="fileName"></div>
-          </div>
-          <button type="button" class="btn extract-btn" onclick="extractDataFromImage()" id="extractBtn" style="display:none; margin-top:10px; background:#27ae60;">🤖 Extract Data from Image</button>
-          <div id="extractStatus" style="display:none; margin-top:10px; color:#27ae60; font-style:italic;"></div>
-        </div>
-
         <div class="btn-group">
           <button type="button" class="btn btn-secondary" onclick="resetForm()">Clear Form</button>
           <button type="button" class="btn btn-primary" onclick="savePrescription()">Save Prescription</button>
@@ -507,22 +507,22 @@
     uploadArea.addEventListener('click', () => fileInput.click());
     uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.style.borderColor = '#3498db'; });
     uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = '#ccc'; });
-    uploadArea.addEventListener('drop', (e) => {
+    uploadArea.addEventListener('drop', async (e) => {
       e.preventDefault();
-      uploadArea.style.borderColor = '#ccc';
+      uploadArea.style.borderColor = '#9b59b6';
       if (e.dataTransfer.files.length) {
         fileInput.files = e.dataTransfer.files;
-        updateFileName();
+        await handleFileUpload();
       }
     });
 
-    fileInput.addEventListener('change', updateFileName);
+    fileInput.addEventListener('change', handleFileUpload);
 
-    function updateFileName() {
+    async function handleFileUpload() {
       if (fileInput.files.length) {
         fileName.textContent = '✓ ' + fileInput.files[0].name;
         uploadArea.classList.add('has-file');
-        document.getElementById('extractBtn').style.display = 'block';
+        await extractDataFromImage();
       }
     }
 
@@ -530,29 +530,118 @@
       if (!fileInput.files.length) { alert('Please upload an image first'); return; }
       const status = document.getElementById('extractStatus');
       status.style.display = 'block';
-      status.textContent = '⏳ Analyzing prescription image...';
+      status.style.background = '#fef3c7';
+      status.style.borderColor = '#f59e0b';
+      status.innerHTML = '<div style="display:flex;align-items:center;gap:10px;"><div class="spinner" style="width:20px;height:20px;border:3px solid #fcd34d;border-top-color:#f59e0b;border-radius:50%;animation:spin 1s linear infinite;"></div><span style="color:#92400e;">Reading prescription... Please wait</span></div>';
+      
       try {
         const formData = new FormData();
         formData.append('image', fileInput.files[0]);
         const res = await fetch('/extract-prescription', { method: 'POST', body: formData });
         const data = await res.json();
-        if (data.extracted) {
-          if (data.extracted.hospital) document.getElementById('hospital').value = data.extracted.hospital;
-          if (data.extracted.date) document.getElementById('date').value = data.extracted.date;
-          if (data.extracted.doctor) document.getElementById('doctor').value = data.extracted.doctor;
-          if (data.extracted.bp) document.getElementById('bp').value = data.extracted.bp;
-          if (data.extracted.pulse) document.getElementById('pulse').value = data.extracted.pulse;
-          if (data.extracted.temperature) document.getElementById('temperature').value = data.extracted.temperature;
-          if (data.extracted.sugar) document.getElementById('sugar').value = data.extracted.sugar;
-          if (data.extracted.cholesterol) document.getElementById('cholesterol').value = data.extracted.cholesterol;
-          if (data.extracted.medication) document.getElementById('medication').value = data.extracted.medication;
-          if (data.extracted.history) document.getElementById('history').value = data.extracted.history;
-          status.textContent = '✓ Data extracted successfully! Review and edit as needed.';
+        
+        if (data.extracted && Object.keys(data.extracted).length > 0) {
+          const ext = data.extracted;
+          let filledFields = [];
+          
+          if (ext.hospital) { document.getElementById('hospital').value = ext.hospital; filledFields.push('Hospital'); }
+          if (ext.reportNo) { document.getElementById('reportNo').value = ext.reportNo; filledFields.push('Report No'); }
+          if (ext.date) { document.getElementById('date').value = ext.date; filledFields.push('Date'); }
+          if (ext.doctor) { document.getElementById('doctor').value = ext.doctor; filledFields.push('Doctor'); }
+          if (ext.bp) { document.getElementById('bp').value = ext.bp; filledFields.push('Blood Pressure'); }
+          if (ext.pulse) { document.getElementById('pulse').value = ext.pulse; filledFields.push('Pulse'); }
+          if (ext.temperature) { document.getElementById('temperature').value = ext.temperature; filledFields.push('Temperature'); }
+          if (ext.sugar) { document.getElementById('sugar').value = ext.sugar; filledFields.push('Blood Sugar'); }
+          if (ext.cholesterol) { document.getElementById('cholesterol').value = ext.cholesterol; filledFields.push('Cholesterol'); }
+          if (ext.medication) { document.getElementById('medication').value = ext.medication; filledFields.push('Medication'); }
+          if (ext.history) { document.getElementById('history').value = ext.history; filledFields.push('Medical History'); }
+          if (ext.notes) { document.getElementById('notes').value = ext.notes; filledFields.push('Notes'); }
+          
+          // Auto-check disease checkboxes based on extracted diseases/diagnosis
+          const diagnosisText = (ext.diseases || ext.diagnosis || '').toLowerCase();
+          if (diagnosisText) {
+            const diseaseMapping = {
+              'diabetes': 'Diabetes',
+              'hypertension': 'Hypertension',
+              'cancer': 'Cancer',
+              'heart': 'Heart Disease',
+              'cardiac': 'Heart Disease',
+              'kidney': 'Kidney Disease',
+              'renal': 'Kidney Disease',
+              'liver': 'Liver Disease',
+              'hepatic': 'Liver Disease',
+              'asthma': 'Asthma',
+              'copd': 'COPD',
+              'arthritis': 'Arthritis',
+              'thyroid': 'Thyroid Disorder',
+              'alzheimer': 'Alzheimers',
+              'parkinson': 'Parkinsons'
+            };
+            
+            const stageMapping = {
+              'type 1': 'Type 1',
+              'type 2': 'Type 2',
+              'type1': 'Type 1',
+              'type2': 'Type 2',
+              'stage 1': 'Stage 1',
+              'stage 2': 'Stage 2',
+              'stage 3': 'Stage 3',
+              'stage 4': 'Stage 4',
+              'stage 5': 'Stage 5',
+              'stage1': 'Stage 1',
+              'stage2': 'Stage 2',
+              'mild': 'Mild',
+              'moderate': 'Moderate',
+              'severe': 'Severe',
+              'early': 'Early',
+              'prediabetes': 'Prediabetes'
+            };
+            
+            let checkedDiseases = [];
+            
+            for (const [keyword, diseaseName] of Object.entries(diseaseMapping)) {
+              if (diagnosisText.includes(keyword)) {
+                const diseaseItem = document.querySelector(`.disease-item[data-disease="${diseaseName}"]`);
+                if (diseaseItem) {
+                  const checkbox = diseaseItem.querySelector('.disease-check');
+                  const select = diseaseItem.querySelector('.stage-select');
+                  checkbox.checked = true;
+                  select.disabled = false;
+                  diseaseItem.classList.add('selected');
+                  checkedDiseases.push(diseaseName);
+                  
+                  // Try to set the stage
+                  for (const [stageKeyword, stageValue] of Object.entries(stageMapping)) {
+                    if (diagnosisText.includes(stageKeyword)) {
+                      const options = Array.from(select.options);
+                      const matchingOption = options.find(opt => opt.value === stageValue);
+                      if (matchingOption) {
+                        select.value = stageValue;
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            
+            if (checkedDiseases.length > 0) {
+              filledFields.push('Diseases: ' + checkedDiseases.join(', '));
+            }
+          }
+          
+          status.style.background = '#f0fdf4';
+          status.style.borderColor = '#22c55e';
+          status.innerHTML = '<div style="color:#166534;"><strong>✓ Data extracted successfully!</strong><br><small>Filled: ' + filledFields.join(', ') + '</small><br><small style="color:#666;">Please review and edit as needed.</small></div>';
         } else {
-          status.textContent = '⚠️ ' + (data.message || 'Could not extract data from image');
+          status.style.background = '#fef2f2';
+          status.style.borderColor = '#ef4444';
+          status.innerHTML = '<div style="color:#991b1b;">⚠️ ' + (data.message || 'Could not extract data from this image. Please fill in the form manually.') + '</div>';
         }
       } catch (err) {
-        status.textContent = '❌ Error: ' + err.message;
+        status.style.background = '#fef2f2';
+        status.style.borderColor = '#ef4444';
+        status.innerHTML = '<div style="color:#991b1b;">❌ Error: ' + err.message + '</div>';
       }
     }
 

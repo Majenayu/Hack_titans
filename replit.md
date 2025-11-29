@@ -96,6 +96,11 @@ Available from:
 - **NEW**: Registration page now has prescription upload feature that automatically reads and extracts medical information from prescription images
 - Added new user fields: medicalConditions, currentMedications (stored and used in emergency features)
 - Updated emergency patient data to include user's stored medical conditions and medications
+- **NEW**: Prescription form now has AI-powered auto-fill at the TOP of the form
+  - Upload a prescription image and it automatically extracts and fills all fields
+  - Automatically checks disease checkboxes based on detected conditions (Diabetes, Hypertension, etc.)
+  - Sets the correct stage/type for each disease
+  - Works with drag-and-drop or click to upload
 
 ## Environment Variables
 - `MONGO_URI` - MongoDB connection string
