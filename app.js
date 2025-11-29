@@ -10,9 +10,10 @@ const OpenAI = require("openai");
 
 // Initialize OpenRouter client (compatible with OpenAI SDK)
 let openai = null;
-if (process.env.OPENAI_API_KEY) {
+const apiKey = process.env.OPENROUTER_API_KEY_HARDCODE || process.env.OPENAI_API_KEY;
+if (apiKey) {
   openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: apiKey,
     baseURL: "https://openrouter.ai/api/v1"
   });
   console.log("OpenRouter integration enabled");
