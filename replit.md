@@ -104,6 +104,7 @@ Available from:
 - **UPDATED**: Now uses OpenRouter (Claude 3.5 Sonnet) for AI-powered prescription reading instead of OpenAI
   - Better vision capability for medical documents
   - More cost-effective with OpenRouter
+  - Model: anthropic/claude-3.5-sonnet
 
 ## Environment Variables
 - `MONGO_URI` - MongoDB connection string

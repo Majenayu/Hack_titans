@@ -508,7 +508,7 @@ app.post("/extract-prescription", upload.single("image"), async (req, res) => {
     const base64Image = imageBuffer.toString('base64');
     
     const response = await openai.chat.completions.create({
-      model: "claude-3-5-sonnet",
+      model: "anthropic/claude-3.5-sonnet",
       messages: [
         {
           role: "user",
@@ -653,7 +653,7 @@ Respond in JSON format with these fields:
 }`;
 
     const response = await openai.chat.completions.create({
-      model: "claude-3-5-sonnet",
+      model: "anthropic/claude-3.5-sonnet",
       messages: [
         { role: "system", content: "You are an emergency medical advisor. Provide clear, actionable first aid guidance while considering patient medical history. Always emphasize calling emergency services first. Respond with valid JSON only." },
         { role: "user", content: prompt }
