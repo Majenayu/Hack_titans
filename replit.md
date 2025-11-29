@@ -93,6 +93,9 @@ Available from:
 - Image upload now includes "Extract Data from Image" button
 - AI analyzes prescription images and auto-fills form fields
 - Emergency feature works with or without OpenAI API key (basic recommendations as fallback)
+- **NEW**: Registration page now has prescription upload feature that automatically reads and extracts medical information from prescription images
+- Added new user fields: medicalConditions, currentMedications (stored and used in emergency features)
+- Updated emergency patient data to include user's stored medical conditions and medications
 
 ## Environment Variables
 - `MONGO_URI` - MongoDB connection string
