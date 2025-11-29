@@ -6,6 +6,10 @@ const bcrypt = require("bcryptjs");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
+const OpenAI = require("openai");
+
+// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // --- CONFIG --- //
 const app = express();
@@ -436,6 +440,215 @@ app.get("/patient/history/:code", async (req, res) => {
 
 
 
+
+// --- EMERGENCY FEATURE --- //
+
+// Emergency types with standard first aid recommendations
+const EMERGENCY_TYPES = {
+  "heart_attack": {
+    name: "Heart Attack",
+    icon: "❤️",
+    severity: "critical",
+    defaultAction: "Call emergency services immediately. If not allergic to aspirin, chew one aspirin (325mg). Keep patient calm and seated.",
+    contraindications: ["aspirin_allergy", "blood_thinners", "bleeding_disorders"]
+  },
+  "cardiac_arrest": {
+    name: "Cardiac Arrest",
+    icon: "💔",
+    severity: "critical",
+    defaultAction: "Call emergency services. Begin CPR immediately. Use AED if available. Continue until help arrives.",
+    contraindications: []
+  },
+  "severe_bleeding": {
+    name: "Severe Bleeding",
+    icon: "🩸",
+    severity: "critical",
+    defaultAction: "Apply direct pressure with clean cloth. Elevate wound above heart if possible. Call emergency services.",
+    contraindications: ["blood_thinners"]
+  },
+  "anaphylaxis": {
+    name: "Anaphylaxis (Severe Allergic Reaction)",
+    icon: "⚠️",
+    severity: "critical",
+    defaultAction: "Use epinephrine auto-injector if available. Call emergency services. Keep airways open. Monitor breathing.",
+    contraindications: []
+  },
+  "seizure": {
+    name: "Seizure/Epilepsy Emergency",
+    icon: "⚡",
+    severity: "critical",
+    defaultAction: "Clear area of hazards. Do NOT restrain. Turn on side after convulsions stop. Call emergency if seizure lasts >5 minutes.",
+    contraindications: []
+  }
+};
+
+// Get patient data for emergency
+app.get("/emergency/patient/:code", async (req, res) => {
+  try {
+    const { code } = req.params;
+    
+    const patient = await User.findOne({ code }).select("name age bloodGroup allergies");
+    if (!patient) return res.status(404).json({ error: "Patient not found" });
+    
+    const prescriptions = await Prescription.find({ code }).sort({ createdAt: -1 }).limit(5);
+    
+    const medicalHistory = {
+      diseases: [],
+      medications: [],
+      allergies: patient.allergies || "None reported"
+    };
+    
+    prescriptions.forEach(p => {
+      if (p.diseases) medicalHistory.diseases.push(...p.diseases.split(',').map(d => d.trim()));
+      if (p.medication) medicalHistory.medications.push(...p.medication.split(',').map(m => m.trim()));
+    });
+    
+    medicalHistory.diseases = [...new Set(medicalHistory.diseases)];
+    medicalHistory.medications = [...new Set(medicalHistory.medications)];
+    
+    res.json({
+      patient: {
+        name: patient.name,
+        age: patient.age,
+        bloodGroup: patient.bloodGroup
+      },
+      medicalHistory
+    });
+  } catch (err) {
+    console.error("Emergency patient fetch error:", err);
+    res.status(500).json({ error: "Failed to fetch patient data" });
+  }
+});
+
+// AI-powered emergency recommendation
+app.post("/emergency/analyze", async (req, res) => {
+  try {
+    const { patientCode, emergencyType } = req.body;
+    
+    if (!EMERGENCY_TYPES[emergencyType]) {
+      return res.status(400).json({ error: "Invalid emergency type" });
+    }
+    
+    const patient = await User.findOne({ code: patientCode }).select("name age bloodGroup allergies");
+    if (!patient) return res.status(404).json({ error: "Patient not found" });
+    
+    const prescriptions = await Prescription.find({ code: patientCode }).sort({ createdAt: -1 }).limit(5);
+    
+    const diseases = [];
+    const medications = [];
+    prescriptions.forEach(p => {
+      if (p.diseases) diseases.push(...p.diseases.split(',').map(d => d.trim()));
+      if (p.medication) medications.push(...p.medication.split(',').map(m => m.trim()));
+    });
+    
+    const emergency = EMERGENCY_TYPES[emergencyType];
+    
+    if (!process.env.OPENAI_API_KEY) {
+      return res.json({
+        emergency: emergency.name,
+        severity: emergency.severity,
+        patientInfo: {
+          name: patient.name,
+          age: patient.age,
+          bloodGroup: patient.bloodGroup,
+          allergies: patient.allergies
+        },
+        recommendation: emergency.defaultAction,
+        warnings: patient.allergies ? [`Patient has allergies: ${patient.allergies}`] : [],
+        existingConditions: [...new Set(diseases)],
+        currentMedications: [...new Set(medications)],
+        aiPowered: false,
+        disclaimer: "DISCLAIMER: This is general first aid guidance. Always call emergency services (911) immediately for life-threatening situations."
+      });
+    }
+    
+    const prompt = `You are an emergency medical advisor AI. A patient is experiencing a ${emergency.name} emergency.
+
+PATIENT INFORMATION:
+- Name: ${patient.name}
+- Age: ${patient.age}
+- Blood Group: ${patient.bloodGroup}
+- Known Allergies: ${patient.allergies || "None reported"}
+- Existing Conditions: ${[...new Set(diseases)].join(', ') || "None recorded"}
+- Current Medications: ${[...new Set(medications)].join(', ') || "None recorded"}
+
+EMERGENCY: ${emergency.name}
+Standard First Aid: ${emergency.defaultAction}
+
+Based on this patient's medical history, provide:
+1. Safe first aid recommendations that won't conflict with their existing conditions or medications
+2. Specific warnings about what NOT to do based on their medical history
+3. Any drug interactions or contraindications to avoid
+4. Priority actions while waiting for emergency services
+
+Respond in JSON format with these fields:
+{
+  "safeRecommendations": ["array of safe actions to take"],
+  "criticalWarnings": ["array of things to avoid based on patient history"],
+  "drugInteractions": ["potential medication conflicts"],
+  "priorityActions": ["numbered priority steps"],
+  "additionalNotes": "any important observations"
+}`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        { role: "system", content: "You are an emergency medical advisor. Provide clear, actionable first aid guidance while considering patient medical history. Always emphasize calling emergency services first." },
+        { role: "user", content: prompt }
+      ],
+      response_format: { type: "json_object" },
+      max_completion_tokens: 1024
+    });
+    
+    const aiAnalysis = JSON.parse(response.choices[0].message.content);
+    
+    res.json({
+      emergency: emergency.name,
+      severity: emergency.severity,
+      patientInfo: {
+        name: patient.name,
+        age: patient.age,
+        bloodGroup: patient.bloodGroup,
+        allergies: patient.allergies
+      },
+      existingConditions: [...new Set(diseases)],
+      currentMedications: [...new Set(medications)],
+      aiAnalysis,
+      aiPowered: true,
+      disclaimer: "DISCLAIMER: This is AI-assisted guidance only. Always call emergency services (911) immediately. This is not a substitute for professional medical care."
+    });
+    
+  } catch (err) {
+    console.error("Emergency analysis error:", err);
+    res.status(500).json({ error: "Failed to analyze emergency" });
+  }
+});
+
+// Log emergency access
+const emergencyLogSchema = new mongoose.Schema({
+  patientCode: String,
+  emergencyType: String,
+  accessedAt: { type: Date, default: Date.now },
+  ipAddress: String
+}, { collection: "emergencyLogs" });
+
+const EmergencyLog = mongoose.models.EmergencyLog || mongoose.model("EmergencyLog", emergencyLogSchema);
+
+app.post("/emergency/log", async (req, res) => {
+  try {
+    const { patientCode, emergencyType } = req.body;
+    const log = new EmergencyLog({
+      patientCode,
+      emergencyType,
+      ipAddress: req.ip
+    });
+    await log.save();
+    res.json({ message: "Emergency access logged" });
+  } catch (err) {
+    console.error("Emergency log error:", err);
+    res.status(500).json({ error: "Failed to log emergency" });
+  }
+});
 
 // --- START SERVER --- //
 const PORT = process.env.PORT || 5000;

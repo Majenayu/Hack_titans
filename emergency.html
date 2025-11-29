@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PALS - Emergency Medical Assistance</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #c0392b 0%, #8e44ad 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .emergency-header {
+      background: #fff;
+      border-radius: 16px;
+      padding: 25px;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    .emergency-header h1 {
+      color: #c0392b;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    .emergency-header p {
+      color: #666;
+      font-size: 14px;
+    }
+    .call-911 {
+      background: #c0392b;
+      color: white;
+      padding: 15px 30px;
+      border-radius: 30px;
+      font-size: 18px;
+      font-weight: 700;
+      display: inline-block;
+      margin-top: 15px;
+      text-decoration: none;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7); }
+      50% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(192, 57, 43, 0); }
+    }
+
+    .search-section {
+      background: white;
+      border-radius: 16px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    .search-section h2 {
+      color: #2c3e50;
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+    .search-form {
+      display: flex;
+      gap: 10px;
+    }
+    .search-input {
+      flex: 1;
+      padding: 15px 20px;
+      font-size: 18px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      text-align: center;
+      letter-spacing: 8px;
+      font-weight: 700;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: #c0392b;
+    }
+    .search-btn {
+      background: #c0392b;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .search-btn:hover { background: #a93226; }
+    .search-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+    .patient-info {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      display: none;
+    }
+    .patient-info.show { display: block; }
+    .patient-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    .patient-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #3498db;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .patient-details h3 { color: #2c3e50; margin: 0 0 5px; }
+    .patient-details p { color: #666; font-size: 13px; margin: 0; }
+    .patient-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .tag {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .tag.blood { background: #ffe6e6; color: #c0392b; }
+    .tag.allergy { background: #fff3cd; color: #856404; }
+    .tag.disease { background: #e3f2fd; color: #1565c0; }
+    .tag.med { background: #e8f5e9; color: #2e7d32; }
+
+    .emergency-types {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .emergency-card {
+      background: white;
+      border-radius: 16px;
+      padding: 25px 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 3px solid transparent;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    .emergency-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    .emergency-card.selected {
+      border-color: #c0392b;
+      background: #fff5f5;
+    }
+    .emergency-card.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .emergency-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+    .emergency-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    .severity-badge {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 3px 10px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: #c0392b;
+      color: white;
+    }
+
+    .analyze-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+      color: white;
+      border: none;
+      padding: 20px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 20px;
+      transition: all 0.3s;
+      display: none;
+    }
+    .analyze-btn.show { display: block; }
+    .analyze-btn:hover { transform: scale(1.02); }
+    .analyze-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+    .results-section {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      display: none;
+    }
+    .results-section.show { display: block; }
+    .results-header {
+      background: linear-gradient(135deg, #c0392b 0%, #e74c3c 100%);
+      color: white;
+      padding: 25px;
+      text-align: center;
+    }
+    .results-header h2 { margin: 0 0 10px; font-size: 24px; }
+    .results-header p { margin: 0; opacity: 0.9; }
+    .results-body { padding: 25px; }
+
+    .result-section {
+      margin-bottom: 20px;
+    }
+    .result-section h4 {
+      color: #2c3e50;
+      font-size: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .result-list {
+      list-style: none;
+      padding: 0;
+    }
+    .result-list li {
+      padding: 12px 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .result-list li.priority {
+      background: #fff3cd;
+      border-left: 4px solid #f39c12;
+    }
+    .result-list li.warning {
+      background: #ffe6e6;
+      border-left: 4px solid #c0392b;
+    }
+    .result-list li.safe {
+      background: #e8f5e9;
+      border-left: 4px solid #27ae60;
+    }
+
+    .disclaimer {
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+    }
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f0f0f0;
+      border-top-color: #c0392b;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .home-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .home-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="emergency-header">
+      <h1>EMERGENCY MEDICAL ASSISTANCE</h1>
+      <p>AI-powered emergency guidance considering patient's medical history</p>
+      <a href="tel:911" class="call-911">CALL 911 NOW</a>
+    </div>
+
+    <div class="search-section">
+      <h2>Step 1: Enter Patient Code</h2>
+      <div class="search-form">
+        <input type="text" id="patientCode" class="search-input" placeholder="0000" maxlength="4" pattern="[0-9]*">
+        <button class="search-btn" onclick="fetchPatient()">Find Patient</button>
+      </div>
+      <div id="patientInfo" class="patient-info"></div>
+    </div>
+
+    <div id="emergencySection" style="display: none;">
+      <div class="search-section">
+        <h2>Step 2: Select Emergency Type</h2>
+        <div class="emergency-types">
+          <div class="emergency-card disabled" data-type="heart_attack" onclick="selectEmergency(this)">
+            <div class="emergency-icon">❤️</div>
+            <div class="emergency-name">Heart Attack</div>
+            <div class="severity-badge">Critical</div>
+          </div>
+          <div class="emergency-card disabled" data-type="cardiac_arrest" onclick="selectEmergency(this)">
+            <div class="emergency-icon">💔</div>
+            <div class="emergency-name">Cardiac Arrest</div>
+            <div class="severity-badge">Critical</div>
+          </div>
+          <div class="emergency-card disabled" data-type="severe_bleeding" onclick="selectEmergency(this)">
+            <div class="emergency-icon">🩸</div>
+            <div class="emergency-name">Severe Bleeding</div>
+            <div class="severity-badge">Critical</div>
+          </div>
+          <div class="emergency-card disabled" data-type="anaphylaxis" onclick="selectEmergency(this)">
+            <div class="emergency-icon">⚠️</div>
+            <div class="emergency-name">Anaphylaxis</div>
+            <div class="severity-badge">Critical</div>
+          </div>
+          <div class="emergency-card disabled" data-type="seizure" onclick="selectEmergency(this)">
+            <div class="emergency-icon">⚡</div>
+            <div class="emergency-name">Seizure</div>
+            <div class="severity-badge">Critical</div>
+          </div>
+        </div>
+      </div>
+
+      <button id="analyzeBtn" class="analyze-btn" onclick="analyzeEmergency()">
+        GET EMERGENCY GUIDANCE
+      </button>
+    </div>
+
+    <div id="resultsSection" class="results-section"></div>
+
+    <a href="index.html" class="home-link">Back to Home</a>
+  </div>
+
+  <script>
+    let currentPatient = null;
+    let selectedEmergency = null;
+
+    async function fetchPatient() {
+      const code = document.getElementById('patientCode').value.trim();
+      if (!code || code.length !== 4) {
+        alert('Please enter a valid 4-digit patient code');
+        return;
+      }
+
+      const infoDiv = document.getElementById('patientInfo');
+      infoDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Finding patient...</p></div>';
+      infoDiv.classList.add('show');
+
+      try {
+        const res = await fetch(`/emergency/patient/${code}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          infoDiv.innerHTML = `<p style="color: #c0392b; text-align: center;">Patient not found. Please check the code.</p>`;
+          return;
+        }
+
+        currentPatient = { code, ...data };
+
+        let tagsHtml = `<span class="tag blood">Blood: ${data.patient.bloodGroup || 'Unknown'}</span>`;
+        if (data.medicalHistory.allergies && data.medicalHistory.allergies !== 'None reported') {
+          tagsHtml += `<span class="tag allergy">Allergy: ${data.medicalHistory.allergies}</span>`;
+        }
+        data.medicalHistory.diseases.slice(0, 3).forEach(d => {
+          tagsHtml += `<span class="tag disease">${d}</span>`;
+        });
+        data.medicalHistory.medications.slice(0, 2).forEach(m => {
+          tagsHtml += `<span class="tag med">${m}</span>`;
+        });
+
+        infoDiv.innerHTML = `
+          <div class="patient-header">
+            <div class="patient-avatar">${data.patient.name.charAt(0).toUpperCase()}</div>
+            <div class="patient-details">
+              <h3>${data.patient.name}</h3>
+              <p>Age: ${data.patient.age || 'Unknown'} | Code: ${code}</p>
+            </div>
+          </div>
+          <div class="patient-tags">${tagsHtml}</div>
+        `;
+
+        document.getElementById('emergencySection').style.display = 'block';
+        document.querySelectorAll('.emergency-card').forEach(card => {
+          card.classList.remove('disabled');
+        });
+
+      } catch (err) {
+        console.error(err);
+        infoDiv.innerHTML = `<p style="color: #c0392b; text-align: center;">Error fetching patient data. Please try again.</p>`;
+      }
+    }
+
+    function selectEmergency(card) {
+      if (card.classList.contains('disabled')) return;
+
+      document.querySelectorAll('.emergency-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedEmergency = card.dataset.type;
+      document.getElementById('analyzeBtn').classList.add('show');
+    }
+
+    async function analyzeEmergency() {
+      if (!currentPatient || !selectedEmergency) return;
+
+      const btn = document.getElementById('analyzeBtn');
+      btn.disabled = true;
+      btn.textContent = 'ANALYZING...';
+
+      const resultsDiv = document.getElementById('resultsSection');
+      resultsDiv.innerHTML = '<div class="loading" style="padding: 60px;"><div class="spinner"></div><p>Analyzing patient history and generating safe recommendations...</p></div>';
+      resultsDiv.classList.add('show');
+
+      try {
+        await fetch('/emergency/log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ patientCode: currentPatient.code, emergencyType: selectedEmergency })
+        });
+
+        const res = await fetch('/emergency/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ patientCode: currentPatient.code, emergencyType: selectedEmergency })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          resultsDiv.innerHTML = `<div class="results-body"><p style="color: #c0392b;">Error: ${data.error}</p></div>`;
+          return;
+        }
+
+        let html = `
+          <div class="results-header">
+            <h2>${data.emergency} - Emergency Guidance</h2>
+            <p>For: ${data.patientInfo.name} (Age: ${data.patientInfo.age})</p>
+          </div>
+          <div class="results-body">
+        `;
+
+        if (data.aiPowered && data.aiAnalysis) {
+          const ai = data.aiAnalysis;
+
+          if (ai.priorityActions && ai.priorityActions.length > 0) {
+            html += `<div class="result-section"><h4>Priority Actions</h4><ul class="result-list">`;
+            ai.priorityActions.forEach((action, i) => {
+              html += `<li class="priority"><strong>${i + 1}.</strong> ${action}</li>`;
+            });
+            html += `</ul></div>`;
+          }
+
+          if (ai.criticalWarnings && ai.criticalWarnings.length > 0) {
+            html += `<div class="result-section"><h4>Critical Warnings</h4><ul class="result-list">`;
+            ai.criticalWarnings.forEach(warning => {
+              html += `<li class="warning">${warning}</li>`;
+            });
+            html += `</ul></div>`;
+          }
+
+          if (ai.safeRecommendations && ai.safeRecommendations.length > 0) {
+            html += `<div class="result-section"><h4>Safe Recommendations</h4><ul class="result-list">`;
+            ai.safeRecommendations.forEach(rec => {
+              html += `<li class="safe">${rec}</li>`;
+            });
+            html += `</ul></div>`;
+          }
+
+          if (ai.drugInteractions && ai.drugInteractions.length > 0) {
+            html += `<div class="result-section"><h4>Drug Interactions to Avoid</h4><ul class="result-list">`;
+            ai.drugInteractions.forEach(interaction => {
+              html += `<li class="warning">${interaction}</li>`;
+            });
+            html += `</ul></div>`;
+          }
+
+          if (ai.additionalNotes) {
+            html += `<div class="result-section"><h4>Additional Notes</h4><p style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 14px;">${ai.additionalNotes}</p></div>`;
+          }
+        } else {
+          html += `
+            <div class="result-section">
+              <h4>Recommended Action</h4>
+              <ul class="result-list">
+                <li class="priority">${data.recommendation}</li>
+              </ul>
+            </div>
+          `;
+
+          if (data.warnings && data.warnings.length > 0) {
+            html += `<div class="result-section"><h4>Warnings</h4><ul class="result-list">`;
+            data.warnings.forEach(w => {
+              html += `<li class="warning">${w}</li>`;
+            });
+            html += `</ul></div>`;
+          }
+        }
+
+        if (data.existingConditions && data.existingConditions.length > 0) {
+          html += `<div class="result-section"><h4>Patient's Existing Conditions</h4><ul class="result-list">`;
+          data.existingConditions.forEach(c => {
+            html += `<li>${c}</li>`;
+          });
+          html += `</ul></div>`;
+        }
+
+        if (data.currentMedications && data.currentMedications.length > 0) {
+          html += `<div class="result-section"><h4>Current Medications</h4><ul class="result-list">`;
+          data.currentMedications.forEach(m => {
+            html += `<li>${m}</li>`;
+          });
+          html += `</ul></div>`;
+        }
+
+        html += `</div>`;
+        html += `<div class="disclaimer">${data.disclaimer}</div>`;
+
+        resultsDiv.innerHTML = html;
+
+      } catch (err) {
+        console.error(err);
+        resultsDiv.innerHTML = `<div class="results-body"><p style="color: #c0392b;">Failed to analyze. Please try again.</p></div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'GET EMERGENCY GUIDANCE';
+      }
+    }
+
+    document.getElementById('patientCode').addEventListener('input', function(e) {
+      this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    document.getElementById('patientCode').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') fetchPatient();
+    });
+  </script>
+</body>
+</html>
