@@ -9,7 +9,14 @@ const path = require("path");
 const OpenAI = require("openai");
 
 // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// Initialize OpenAI client only if API key is available
+let openai = null;
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  console.log("OpenAI integration enabled");
+} else {
+  console.log("OpenAI API key not found - emergency feature will use basic recommendations");
+}
 
 // --- CONFIG --- //
 const app = express();
@@ -543,7 +550,7 @@ app.post("/emergency/analyze", async (req, res) => {
     
     const emergency = EMERGENCY_TYPES[emergencyType];
     
-    if (!process.env.OPENAI_API_KEY) {
+    if (!openai) {
       return res.json({
         emergency: emergency.name,
         severity: emergency.severity,

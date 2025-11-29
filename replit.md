@@ -1,9 +1,9 @@
 # PALS - Patient Access and Logging System
 
 ## Overview
-PALS is a comprehensive medical kit application that allows patients to manage their medical records and prescriptions with detailed health information, while enabling doctors to access patient information based on privacy settings.
+PALS is a comprehensive medical kit application that allows patients to manage their medical records and prescriptions with detailed health information, while enabling doctors to access patient information based on privacy settings. Now includes an AI-powered emergency assistance feature.
 
-**Current State**: Fully configured and running in Replit environment with structured prescription format and enhanced UI.
+**Current State**: Fully configured and running in Replit environment with structured prescription format, enhanced UI, and emergency medical assistance feature.
 
 ## Project Architecture
 
@@ -11,6 +11,7 @@ PALS is a comprehensive medical kit application that allows patients to manage t
 - **Framework**: Express.js v5.1.0
 - **Database**: MongoDB Atlas (cloud-hosted)
 - **File Storage**: Cloudinary for images and prescriptions
+- **AI Integration**: OpenAI GPT-5 for emergency recommendations
 - **Port**: 5000 (configured for Replit)
 - **Host**: 0.0.0.0 in development, localhost in production
 
@@ -27,6 +28,7 @@ PALS is a comprehensive medical kit application that allows patients to manage t
   - `log.html` - Doctor login
   - `reg.html` - Doctor registration
   - `dash.html` - Doctor dashboard with patient search
+  - `emergency.html` - Emergency medical assistance (NEW)
 
 ### Key Features
 1. **Patient Management**: Registration, login, profile management with photo upload
@@ -42,6 +44,28 @@ PALS is a comprehensive medical kit application that allows patients to manage t
 3. **Privacy Controls**: Patients control what doctors can see with easy toggle interface
 4. **Doctor Portal**: Search patients by code, view authorized data in structured format
 5. **Visit History**: Track which doctors accessed patient records
+6. **Emergency Medical Assistance (NEW)**:
+   - No login required for emergency access
+   - Enter patient code to fetch medical history
+   - Select from 5 critical emergency types
+   - AI-powered recommendations considering patient's existing conditions
+   - Drug interaction warnings
+   - Safe first aid guidance
+
+### Emergency Feature
+The emergency feature allows nearby people or doctors to:
+1. Enter a patient's 4-digit code
+2. Select from 5 emergency types:
+   - Heart Attack
+   - Cardiac Arrest
+   - Severe Bleeding
+   - Anaphylaxis (Severe Allergic Reaction)
+   - Seizure/Epilepsy Emergency
+3. Get AI-powered recommendations that:
+   - Consider patient's existing diseases
+   - Check for medication conflicts
+   - Provide safe first aid guidance
+   - Warn about drug interactions
 
 ### Prescription Fields
 - **Hospital Info**: Hospital name, Report number, Date
@@ -72,16 +96,15 @@ The system supports the following diseases with stage selection:
 - `patientData` - Prescriptions and medical records with structured fields
 - `visibilityData` - Privacy settings per patient per field
 - `visitHistory` - Doctor access logs
+- `emergencyLogs` - Emergency access tracking (NEW)
 
 ## Recent Changes (November 29, 2025)
-- Enhanced prescription form with structured sections
-- Added disease checkboxes with stage selection
-- Redesigned manage visibility page with columnar table layout
-- Updated patient dashboard with stats and quick actions
-- Improved doctor dashboard with structured patient data display
-- Added detailed prescription cards view
-- Updated backend schema for new fields (bp, pulse, temperature, diseases, history)
-- Configured for Replit environment with proper port and host settings
+- Added AI-powered emergency medical assistance feature
+- Emergency page accessible without login
+- 5 critical emergency types with AI recommendations
+- Drug interaction and contraindication warnings
+- Emergency access logging for audit
+- Added emergency links to login pages
 
 ## Environment Variables
 The following environment variables can be configured (fallback values are in place):
@@ -91,6 +114,7 @@ The following environment variables can be configured (fallback values are in pl
 - `CLOUDINARY_API_SECRET` - Cloudinary API secret
 - `PORT` - Server port (default: 5000)
 - `NODE_ENV` - Environment mode (production/development)
+- `OPENAI_API_KEY` - OpenAI API key for AI-powered emergency recommendations (optional)
 
 ## Dependencies
 - **express** (v5.1.0) - Web framework
@@ -100,11 +124,13 @@ The following environment variables can be configured (fallback values are in pl
 - **cloudinary** (v2.7.0) - Image storage
 - **cors** (v2.8.5) - Cross-origin resource sharing
 - **body-parser** (v2.2.0) - Request body parsing
+- **openai** - OpenAI API client for AI recommendations
 
 ## Development
 - Run `npm start` to start the server
 - Access the application at the provided Replit URL
 - Frontend automatically served through the Express server
+- Emergency feature works with or without OpenAI API key (fallback to basic recommendations)
 
 ## User Preferences
 None specified yet.
