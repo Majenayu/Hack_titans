@@ -8,14 +8,16 @@ const cors = require("cors");
 const path = require("path");
 const OpenAI = require("openai");
 
-// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
-// Initialize OpenAI client only if API key is available
+// Initialize OpenRouter client (compatible with OpenAI SDK)
 let openai = null;
 if (process.env.OPENAI_API_KEY) {
-  openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  console.log("OpenAI integration enabled");
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    baseURL: "https://openrouter.ai/api/v1"
+  });
+  console.log("OpenRouter integration enabled");
 } else {
-  console.log("OpenAI API key not found - emergency feature will use basic recommendations");
+  console.log("OpenRouter API key not found - emergency feature will use basic recommendations");
 }
 
 // --- CONFIG --- //
@@ -506,17 +508,16 @@ app.post("/extract-prescription", upload.single("image"), async (req, res) => {
     const base64Image = imageBuffer.toString('base64');
     
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "claude-3-5-sonnet",
       messages: [
         {
           role: "user",
           content: [
-            { type: "text", text: "Extract medical prescription information from this image and return ONLY valid JSON (no markdown) with these fields: hospital, date (YYYY-MM-DD), doctor, bp, pulse, temperature, sugar, cholesterol, medication, history, diseases. If a field is not visible, omit it. Return empty object if not a prescription." },
+            { type: "text", text: "Extract medical prescription information from this prescription image. Return ONLY valid JSON (no markdown) with these exact fields: hospital, reportNo, date (YYYY-MM-DD), doctor, bp, pulse, temperature, sugar, cholesterol, medication, history, diseases, diagnosis. For vitals and lab values, include the units (e.g., '145/92 mmHg', '98.6°F', '180 mg/dL'). If a field is not visible, omit it. Return empty object if not a prescription." },
             { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Image}` } }
           ]
         }
       ],
-      response_format: { type: "json_object" },
       max_completion_tokens: 512
     });
 
@@ -652,12 +653,11 @@ Respond in JSON format with these fields:
 }`;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "claude-3-5-sonnet",
       messages: [
-        { role: "system", content: "You are an emergency medical advisor. Provide clear, actionable first aid guidance while considering patient medical history. Always emphasize calling emergency services first." },
+        { role: "system", content: "You are an emergency medical advisor. Provide clear, actionable first aid guidance while considering patient medical history. Always emphasize calling emergency services first. Respond with valid JSON only." },
         { role: "user", content: prompt }
       ],
-      response_format: { type: "json_object" },
       max_completion_tokens: 1024
     });
     

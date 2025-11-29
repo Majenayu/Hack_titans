@@ -101,13 +101,16 @@ Available from:
   - Automatically checks disease checkboxes based on detected conditions (Diabetes, Hypertension, etc.)
   - Sets the correct stage/type for each disease
   - Works with drag-and-drop or click to upload
+- **UPDATED**: Now uses OpenRouter (Claude 3.5 Sonnet) for AI-powered prescription reading instead of OpenAI
+  - Better vision capability for medical documents
+  - More cost-effective with OpenRouter
 
 ## Environment Variables
 - `MONGO_URI` - MongoDB connection string
 - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` - Cloudinary credentials
 - `PORT` - Server port (default: 5000)
 - `NODE_ENV` - Environment mode
-- `OPENAI_API_KEY` - OpenAI API key (optional, enables AI extraction and intelligent emergency recommendations)
+- `OPENAI_API_KEY` - OpenRouter API key (enables AI extraction and intelligent emergency recommendations)
 
 ## Dependencies
 - **express**, **mongoose**, **bcryptjs**, **multer**, **cloudinary**, **cors**, **body-parser**, **openai**
