@@ -76,7 +76,7 @@
         return alert("Please select or capture an image");
       }
 
-      const res = await fetch(`http://localhost:3000/prescription/${user.code}`, {
+      const res = await fetch(`/prescription/${user.code}`, {
         method: "POST",
         body: formData
       });
@@ -91,7 +91,7 @@
 
    // Load prescriptions
 async function loadPrescriptions() {
-  const res = await fetch(`http://localhost:3000/prescription/${user.code}`);
+  const res = await fetch(`/prescription/${user.code}`);
   const prescriptions = await res.json();
 
   if (!Array.isArray(prescriptions)) {

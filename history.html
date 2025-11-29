@@ -32,7 +32,7 @@
       }
 
       try {
-        const res = await fetch(`http://localhost:3000/patient/history/${user.code}`);
+        const res = await fetch(`/patient/history/${user.code}`);
         if (!res.ok) {
           document.getElementById("historyContainer").innerHTML =
             "<p style='color:gray;'>No history found.</p>";

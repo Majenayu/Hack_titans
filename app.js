@@ -15,16 +15,16 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
 
 // MongoDB Connection
-const MONGO_URI = "mongodb+srv://Dream:Dream@dream.spzp7dv.mongodb.net/?retryWrites=true&w=majority&appName=Dream";
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://Dream:Dream@dream.spzp7dv.mongodb.net/?retryWrites=true&w=majority&appName=Dream";
 mongoose.connect(MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ Mongo Error:", err));
 
 // Cloudinary Config
 cloudinary.config({
-  cloud_name: "dcd0vatd4",
-  api_secret: "Jp54tH7ROGA6aGXB4p1hC_O3G58",
-  api_key: "682614525437581"
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "dcd0vatd4",
+  api_secret: process.env.CLOUDINARY_API_SECRET || "Jp54tH7ROGA6aGXB4p1hC_O3G58",
+  api_key: process.env.CLOUDINARY_API_KEY || "682614525437581"
 });
 
 // Multer setup
@@ -432,8 +432,9 @@ app.get("/patient/history/:code", async (req, res) => {
 
 
 // --- START SERVER --- //
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
-  console.log(`➡️ Open http://localhost:${PORT}/register.html`);
+const PORT = process.env.PORT || 5000;
+const HOST = process.env.NODE_ENV === 'production' ? 'localhost' : '0.0.0.0';
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 Server running at http://${HOST}:${PORT}`);
+  console.log(`➡️ Open http://${HOST}:${PORT}/register.html`);
 });
