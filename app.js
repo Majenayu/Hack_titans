@@ -36,10 +36,13 @@ const visibilitySchema = new mongoose.Schema({
   hospital: { type: String, default: "public" },
   reportNo: { type: String, default: "public" },
   date: { type: String, default: "public" },
-  vitals: { type: String, default: "public" },
+  bp: { type: String, default: "public" },
+  pulse: { type: String, default: "public" },
+  temperature: { type: String, default: "public" },
   sugar: { type: String, default: "public" },
   cholesterol: { type: String, default: "public" },
-  diagnosis: { type: String, default: "public" },
+  history: { type: String, default: "public" },
+  diseases: { type: String, default: "public" },
   medication: { type: String, default: "public" },
   notes: { type: String, default: "public" },
   doctor: { type: String, default: "public" }
@@ -63,16 +66,19 @@ const User = mongoose.model("User", userSchema);
 
 // --- PRESCRIPTION SCHEMA (GLOBAL patientData collection) --- //
 const prescriptionSchema = new mongoose.Schema({
-  code: String,        // patient unique code
+  code: String,
   date: String,
   createdAt: { type: Date, default: Date.now },
   photo: String,
   hospital: String,
   reportNo: String,
-  vitals: String,
+  bp: String,
+  pulse: String,
+  temperature: String,
   sugar: String,
   cholesterol: String,
-  diagnosis: String,
+  history: String,
+  diseases: String,
   medication: String,
   notes: String,
   doctor: String
@@ -156,7 +162,7 @@ app.get("/user/:code", async (req, res) => {
 app.post("/prescription/:code", upload.single("photo"), async (req, res) => {
   try {
     const { code } = req.params;
-    const { date, hospital, reportNo, vitals, sugar, cholesterol, diagnosis, medication, notes, doctor } = req.body;
+    const { date, hospital, reportNo, bp, pulse, temperature, sugar, cholesterol, history, diseases, medication, notes, doctor } = req.body;
 
     let photoUrl = "";
     if (req.file) {
@@ -167,8 +173,8 @@ app.post("/prescription/:code", upload.single("photo"), async (req, res) => {
     }
 
     const prescription = new Prescription({
-      code, date, photo: photoUrl, hospital, reportNo, vitals, sugar,
-      cholesterol, diagnosis, medication, notes, doctor
+      code, date, photo: photoUrl, hospital, reportNo, bp, pulse, temperature, sugar,
+      cholesterol, history, diseases, medication, notes, doctor
     });
 
     await prescription.save();
@@ -183,9 +189,9 @@ app.post("/prescription/:code", upload.single("photo"), async (req, res) => {
 app.put("/prescription/:code/:id", upload.single("photo"), async (req, res) => {
   try {
     const { id } = req.params;
-    const { date, hospital, reportNo, vitals, sugar, cholesterol, diagnosis, medication, notes, doctor } = req.body;
+    const { date, hospital, reportNo, bp, pulse, temperature, sugar, cholesterol, history, diseases, medication, notes, doctor } = req.body;
 
-    let updateData = { date, hospital, reportNo, vitals, sugar, cholesterol, diagnosis, medication, notes, doctor };
+    let updateData = { date, hospital, reportNo, bp, pulse, temperature, sugar, cholesterol, history, diseases, medication, notes, doctor };
 
     if (req.file) {
       const uploaded = await cloudinary.uploader.upload(req.file.path, {

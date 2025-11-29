@@ -2,137 +2,392 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Doctor Dashboard</title>
+  <title>PALS - Doctor Dashboard</title>
   <style>
+    * { box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f4f6f9;
+      background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
       margin: 0;
       padding: 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
     }
     header {
-      background: #2980b9;
-      color: white;
-      padding: 15px 25px;
+      background: white;
+      padding: 20px 30px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-radius: 8px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
     }
-    main {
-      background: white;
-      margin-top: 25px;
-      padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      max-width: 700px;
-      margin-left: auto;
-      margin-right: auto;
+    .doctor-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
     }
-    input {
-      padding: 10px;
-      width: 200px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    button {
-      padding: 10px 16px;
-      border: none;
-      background: #2980b9;
+    .doctor-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       color: white;
-      border-radius: 6px;
-      margin-left: 8px;
-      cursor: pointer;
+      font-size: 24px;
     }
-    button:hover { background: #1f6692; }
-    #result img { width: 120px; border-radius: 50%; margin: 10px 0; }
-    .logout { background: #c0392b; }
-    .logout:hover { background: #962d22; }
-    .card {
-      background: #f9fbfc;
+    .doctor-details h2 {
+      margin: 0;
+      font-size: 18px;
+      color: #2c3e50;
+    }
+    .doctor-details p {
+      margin: 3px 0 0;
+      color: #666;
+      font-size: 13px;
+    }
+    .logout-btn {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .logout-btn:hover { background: #c0392b; }
+
+    .search-card {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+    }
+    .search-card h3 {
+      margin: 0 0 20px;
+      color: #2c3e50;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .search-form {
+      display: flex;
+      gap: 10px;
+    }
+    .search-input {
+      flex: 1;
+      padding: 15px 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: #3498db;
+    }
+    .search-btn {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .search-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(52,152,219,0.4);
+    }
+
+    .result-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .patient-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 25px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .patient-photo {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 4px solid rgba(255,255,255,0.3);
+      object-fit: cover;
+    }
+    .patient-basic h2 {
+      margin: 0 0 10px;
+      font-size: 24px;
+    }
+    .patient-basic p {
+      margin: 5px 0;
+      opacity: 0.9;
+      font-size: 14px;
+    }
+    .patient-code {
+      background: rgba(255,255,255,0.2);
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 13px;
+      display: inline-block;
+      margin-top: 10px;
+    }
+
+    .patient-body {
+      padding: 25px;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin: 20px 0 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    .section-title:first-child { margin-top: 0; }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+    .data-card {
+      background: #f8f9fa;
       padding: 15px;
       border-radius: 10px;
-      margin-top: 15px;
+      border-left: 4px solid #3498db;
+    }
+    .data-card.vitals { border-left-color: #e74c3c; }
+    .data-card.lab { border-left-color: #27ae60; }
+    .data-card.medical { border-left-color: #9b59b6; }
+    .data-card label {
+      display: block;
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 5px;
+    }
+    .data-card p {
+      margin: 0;
+      font-size: 15px;
+      color: #2c3e50;
+      font-weight: 500;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+    .diseases-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 5px;
+    }
+    .disease-tag {
+      background: #ffeaea;
+      color: #e74c3c;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: #888;
+    }
+    .no-data span { font-size: 48px; display: block; margin-bottom: 15px; }
+
+    .private-notice {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      color: #856404;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
   </style>
 </head>
 <body>
-  <header>
-    <div>
-      <h2>👨‍⚕️ <span id="docName"></span></h2>
-      <p id="docSpec"></p>
-    </div>
-    <button class="logout" onclick="logout()">Logout</button>
-  </header>
+  <div class="container">
+    <header>
+      <div class="doctor-info">
+        <div class="doctor-avatar">👨‍⚕️</div>
+        <div class="doctor-details">
+          <h2 id="docName"></h2>
+          <p id="docSpec"></p>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </header>
 
-  <main>
-    <h3>Search Patient</h3>
-    <input type="text" id="code" placeholder="Enter 4-digit code">
-    <button onclick="searchPatient()">Search</button>
-    <hr>
+    <div class="search-card">
+      <h3>🔍 Search Patient</h3>
+      <div class="search-form">
+        <input type="text" id="code" class="search-input" placeholder="Enter 4-digit patient code">
+        <button class="search-btn" onclick="searchPatient()">Search</button>
+      </div>
+    </div>
+
     <div id="result"></div>
-  </main>
+  </div>
 
   <script>
-  // ✅ Load doctor info
-  const doc = JSON.parse(localStorage.getItem("doctor"));
-  if (!doc) window.location.href = "log.html";
-  document.getElementById("docName").textContent = doc.name;
-  document.getElementById("docSpec").textContent = doc.specialization;
+    const doc = JSON.parse(localStorage.getItem("doctor"));
+    if (!doc) window.location.href = "log.html";
+    document.getElementById("docName").textContent = doc.name;
+    document.getElementById("docSpec").textContent = doc.specialization;
 
-  async function searchPatient() {
-    const codeInput = document.getElementById("code");
-    const code = codeInput.value.trim();
-    if (!code) return alert("Enter patient code");
+    const fieldLabels = {
+      hospital: 'Hospital',
+      reportNo: 'Report Number',
+      date: 'Visit Date',
+      bp: 'Blood Pressure',
+      pulse: 'Pulse Rate',
+      temperature: 'Temperature',
+      sugar: 'Blood Sugar',
+      cholesterol: 'Cholesterol',
+      history: 'Medical History',
+      diseases: 'Diseases & Conditions',
+      medication: 'Medication',
+      notes: "Doctor's Notes",
+      doctor: 'Attending Doctor'
+    };
 
-    try {
-      const res = await fetch(`/doctor/patient/${code}?doctorId=${doc.id}`);
-      const data = await res.json();
+    async function searchPatient() {
+      const code = document.getElementById("code").value.trim();
+      if (!code) return alert("Enter patient code");
+
       const div = document.getElementById("result");
-      div.innerHTML = "";
+      div.innerHTML = '<div class="result-card"><div class="no-data"><span>⏳</span>Searching...</div></div>';
 
-      if (!res.ok) {
-        div.innerHTML = `<p style="color:red;">${data.error || "Patient not found"}</p>`;
-        return;
-      }
+      try {
+        const res = await fetch(`/doctor/patient/${code}?doctorId=${doc.id}`);
+        const data = await res.json();
 
-      const p = data.patientInfo;
-      const publicData = data.publicData || {};
-
-      // 🧍 Patient Info
-      div.innerHTML = `
-        <div style="display:flex;align-items:center;gap:15px;">
-          <img src="${p.profilePhoto || ''}" alt="${p.name}" width="100" style="border-radius:10px;">
-          <div>
-            <h3>${p.name} (${p.age || '-'} yrs)</h3>
-            <p><b>Blood Group:</b> ${p.bloodGroup || '-'}</p>
-            <p><b>Allergies:</b> ${p.allergies || 'None'}</p>
-            <p><b>Emergency Contact:</b> ${p.emergencyContact || '-'}</p>
-          </div>
-        </div>
-        <hr>
-        <h3>📄 Public Prescription Info</h3>
-      `;
-
-      // 💊 Public Data
-      if (Object.keys(publicData).length > 0) {
-        for (const [key, value] of Object.entries(publicData)) {
-          div.innerHTML += `<p><b>${key}:</b> ${value}</p>`;
+        if (!res.ok) {
+          div.innerHTML = `<div class="result-card"><div class="no-data"><span>❌</span>${data.error || "Patient not found"}</div></div>`;
+          return;
         }
-      } else {
-        div.innerHTML += `<p style="color:gray;">No public data found.</p>`;
+
+        const p = data.patientInfo;
+        const publicData = data.publicData || {};
+
+        let html = `
+          <div class="result-card">
+            <div class="patient-header">
+              <img src="${p.profilePhoto || 'default.png'}" alt="${p.name}" class="patient-photo">
+              <div class="patient-basic">
+                <h2>${p.name}</h2>
+                <p>Age: ${p.age || '-'} years | Blood Group: ${p.bloodGroup || '-'}</p>
+                <p>Allergies: ${p.allergies || 'None'}</p>
+                <p>Emergency Contact: ${p.emergencyContact || '-'}</p>
+                <div class="patient-code">Code: ${p.code}</div>
+              </div>
+            </div>
+            <div class="patient-body">
+        `;
+
+        const hasData = Object.keys(publicData).filter(k => !['_id', 'code', 'createdAt', '__v', 'photo'].includes(k)).length > 0;
+
+        if (hasData) {
+          const vitals = ['bp', 'pulse', 'temperature'];
+          const lab = ['sugar', 'cholesterol'];
+          const medical = ['history', 'diseases', 'medication', 'notes'];
+          const info = ['hospital', 'reportNo', 'date', 'doctor'];
+
+          const renderSection = (title, fields, cardClass) => {
+            const relevantFields = fields.filter(f => publicData[f]);
+            if (relevantFields.length === 0) return '';
+            
+            let section = `<div class="section-title">${title}</div><div class="data-grid">`;
+            relevantFields.forEach(f => {
+              if (f === 'diseases' && publicData[f]) {
+                const diseases = publicData[f].split(',').map(d => d.trim());
+                section += `
+                  <div class="data-card ${cardClass} full-width">
+                    <label>${fieldLabels[f]}</label>
+                    <div class="diseases-list">
+                      ${diseases.map(d => `<span class="disease-tag">${d}</span>`).join('')}
+                    </div>
+                  </div>
+                `;
+              } else {
+                section += `
+                  <div class="data-card ${cardClass}">
+                    <label>${fieldLabels[f] || f}</label>
+                    <p>${publicData[f]}</p>
+                  </div>
+                `;
+              }
+            });
+            section += '</div>';
+            return section;
+          };
+
+          html += renderSection('🏥 Hospital Information', info, '');
+          html += renderSection('💓 Vitals', vitals, 'vitals');
+          html += renderSection('🧪 Lab Results', lab, 'lab');
+          html += renderSection('📋 Medical Details', medical, 'medical');
+
+          if (publicData.photo) {
+            html += `
+              <div class="section-title">📎 Prescription Image</div>
+              <img src="${publicData.photo}" alt="Prescription" style="max-width: 100%; border-radius: 10px; cursor: pointer;" onclick="window.open('${publicData.photo}')">
+            `;
+          }
+        } else {
+          html += `<div class="no-data"><span>🔒</span>No public prescription data available for this patient.</div>`;
+        }
+
+        html += `
+            <div class="private-notice">
+              <span>ℹ️</span>
+              <span>Some fields may be hidden due to patient privacy settings. Only public fields are displayed.</span>
+            </div>
+            </div>
+          </div>
+        `;
+
+        div.innerHTML = html;
+      } catch (err) {
+        console.error("Fetch error:", err);
+        div.innerHTML = `<div class="result-card"><div class="no-data"><span>⚠️</span>Failed to fetch patient data. Please check your connection.</div></div>`;
       }
-    } catch (err) {
-      console.error("Fetch error:", err);
-      alert("Failed to fetch patient data. Please check server connection.");
     }
-  }
 
-  function logout() {
-    localStorage.removeItem("doctor");
-    window.location.href = "log.html";
-  }
-</script>
+    function logout() {
+      localStorage.removeItem("doctor");
+      window.location.href = "log.html";
+    }
 
+    document.getElementById("code").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") searchPatient();
+    });
+  </script>
 </body>
 </html>
