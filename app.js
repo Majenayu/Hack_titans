@@ -489,6 +489,45 @@ const EMERGENCY_TYPES = {
   }
 };
 
+// Extract data from prescription image using AI
+app.post("/extract-prescription", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No image provided" });
+    
+    if (!openai) {
+      return res.json({ extracted: {}, message: "AI extraction not available (API key not configured)" });
+    }
+
+    const imageBuffer = require('fs').readFileSync(req.file.path);
+    const base64Image = imageBuffer.toString('base64');
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Extract medical prescription information from this image and return ONLY valid JSON (no markdown) with these fields: hospital, date (YYYY-MM-DD), doctor, bp, pulse, temperature, sugar, cholesterol, medication, history, diseases. If a field is not visible, omit it. Return empty object if not a prescription." },
+            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Image}` } }
+          ]
+        }
+      ],
+      response_format: { type: "json_object" },
+      max_completion_tokens: 512
+    });
+
+    try {
+      const extracted = JSON.parse(response.choices[0].message.content);
+      res.json({ extracted, success: true });
+    } catch {
+      res.json({ extracted: {}, message: "Could not parse prescription data" });
+    }
+  } catch (err) {
+    console.error("Extract error:", err);
+    res.json({ extracted: {}, message: "Error extracting data" });
+  }
+});
+
 // Get patient data for emergency
 app.get("/emergency/patient/:code", async (req, res) => {
   try {

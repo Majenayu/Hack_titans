@@ -185,6 +185,8 @@
     .action-card.manage-visibility:hover { background: #faf0ff; }
     .action-card.view-history { border-color: #e67e22; }
     .action-card.view-history:hover { background: #fff8f0; }
+    .action-card.emergency { border-color: #c0392b; }
+    .action-card.emergency:hover { background: #ffe6e6; }
 
     .action-icon {
       width: 60px;
@@ -360,6 +362,13 @@
         <div class="action-icon">📊</div>
         <h3>Doctor Visit History</h3>
         <p>See which doctors have viewed your medical records.</p>
+        <div class="action-arrow">→</div>
+      </div>
+      
+      <div class="action-card emergency" onclick="location.href='emergency.html'">
+        <div class="action-icon">🚨</div>
+        <h3>Emergency Assistance</h3>
+        <p>Quick access to AI-powered emergency guidance and first aid.</p>
         <div class="action-arrow">→</div>
       </div>
     </div>
