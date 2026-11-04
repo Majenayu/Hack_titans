@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const multer = require("multer");
@@ -7,6 +8,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
 const OpenAI = require("openai");
+const pg = require("./db/postgres"); // Supabase (PostgreSQL) sync layer
 
 // Initialize OpenRouter client (compatible with OpenAI SDK)
 let openai = null;
@@ -28,17 +30,31 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
 
-// MongoDB Connection
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://Dream:Dream@dream.spzp7dv.mongodb.net/?retryWrites=true&w=majority&appName=Dream";
+// MongoDB Connection (primary store / backup)
+const MONGO_URI = process.env.MONGO_URI;
+if (!MONGO_URI) {
+  console.error("❌ MONGO_URI is not set. Create a .env file (see .env example).");
+}
 mongoose.connect(MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ Mongo Error:", err));
 
+// Supabase (PostgreSQL) - secondary store kept in sync with Mongo
+pg.init();
+(async () => {
+  if (pg.isEnabled()) {
+    const ok = await pg.testConnection();
+    if (ok) {
+      try { await pg.runSchema(); } catch (e) { console.error("Schema ensure failed:", e.message); }
+    }
+  }
+})();
+
 // Cloudinary Config
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "dcd0vatd4",
-  api_secret: process.env.CLOUDINARY_API_SECRET || "Jp54tH7ROGA6aGXB4p1hC_O3G58",
-  api_key: process.env.CLOUDINARY_API_KEY || "682614525437581"
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  api_key: process.env.CLOUDINARY_API_KEY
 });
 
 // Multer setup
@@ -125,6 +141,7 @@ app.post("/register", upload.single("photo"), async (req, res) => {
       email, password: hashedPass, profilePhoto: photoUrl
     });
     await newUser.save();
+    pg.syncUser(newUser.toObject()); // mirror to Supabase (best-effort)
 
     res.json({ message: "✅ Registered Successfully", code, userId: newUser._id });
   } catch (err) {
@@ -196,6 +213,7 @@ app.post("/prescription/:code", upload.single("photo"), async (req, res) => {
     });
 
     await prescription.save();
+    pg.syncPrescription(prescription.toObject()); // mirror to Supabase
     res.json({ message: "✅ Prescription saved", prescription });
   } catch (err) {
     console.error("Prescription save error:", err);
@@ -219,6 +237,7 @@ app.put("/prescription/:code/:id", upload.single("photo"), async (req, res) => {
     }
 
     const updated = await Prescription.findByIdAndUpdate(id, updateData, { new: true });
+    if (updated) pg.syncPrescription(updated.toObject()); // mirror to Supabase
     res.json({ message: "✅ Prescription updated", updated });
   } catch (err) {
     console.error("Prescription update error:", err);
@@ -245,6 +264,7 @@ app.get("/visibility/:code", async (req, res) => {
     if (!prefs) {
       prefs = new Visibility({ code: req.params.code });
       await prefs.save();
+      pg.syncVisibility(prefs.toObject()); // mirror to Supabase
     }
     res.json(prefs);
   } catch (err) {
@@ -262,6 +282,7 @@ app.put("/visibility/:code", async (req, res) => {
       { $set: update },
       { new: true, upsert: true }
     );
+    pg.syncVisibility(prefs.toObject()); // mirror to Supabase
     res.json(prefs);
   } catch (err) {
     res.status(500).json({ error: "Failed to update visibility" });
@@ -276,6 +297,7 @@ app.get("/manage/:code", async (req, res) => {
     if (!visibility) {
       visibility = new Visibility({ code: req.params.code });
       await visibility.save();
+      pg.syncVisibility(visibility.toObject()); // mirror to Supabase
     }
     res.json({ prescription, visibility });
   } catch (err) {
@@ -297,6 +319,7 @@ app.put("/visibility/:code", async (req, res) => {
       { $set: { [field]: value || "public" } },
       { new: true, upsert: true }
     );
+    pg.syncVisibility(updated.toObject()); // mirror to Supabase
 
     res.json(updated);
   } catch (err) {
@@ -341,6 +364,7 @@ app.post("/doctor/register", upload.single("photo"), async (req, res) => {
     });
 
     await newDoc.save();
+    pg.syncDoctor(newDoc.toObject()); // mirror to Supabase
     res.json({ message: "✅ Doctor Registered Successfully" });
   } catch (err) {
     console.error("Doctor registration error:", err);
@@ -401,13 +425,15 @@ app.get("/doctor/patient/:code", async (req, res) => {
     if (doctorId) {
       const doctor = await Doctor.findById(doctorId);
       if (doctor) {
-        await new VisitHistory({
+        const visit = new VisitHistory({
           patientCode: code,
           doctorId,
           doctorName: doctor.name,
           specialization: doctor.specialization,
           photo: doctor.photo
-        }).save();
+        });
+        await visit.save();
+        pg.syncVisit(visit.toObject()); // mirror to Supabase
       }
     }
 
@@ -705,6 +731,7 @@ app.post("/emergency/log", async (req, res) => {
       ipAddress: req.ip
     });
     await log.save();
+    pg.syncEmergencyLog(log.toObject()); // mirror to Supabase
     res.json({ message: "Emergency access logged" });
   } catch (err) {
     console.error("Emergency log error:", err);
